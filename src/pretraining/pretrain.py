@@ -8,6 +8,8 @@ import numpy as np
 import traceback
 import torch
 from datasets import load_dataset
+from huggingface_hub import snapshot_download
+from huggingface_hub.utils import LocalEntryNotFoundError
 from transformers import RobertaTokenizer, DataCollatorForSeq2Seq, TrainingArguments
 from transformers.models.t5 import T5ForConditionalGeneration
 from transformers.trainer_utils import get_last_checkpoint
@@ -36,6 +38,24 @@ def find_langs_in_data_dir(data_dir):
 def num_parameters(model):
     model_parameters = model.parameters()
     return sum([np.prod(p.size()) for p in model_parameters])
+
+
+def resolve_model_path(repo_id: str):
+    """Return a local snapshot path for the given HF repo, downloading if needed."""
+    local_only = os.environ.get("TRANSFORMERS_OFFLINE", "0").upper() in {"1", "ON", "YES", "TRUE"}
+    cache_dir = os.environ.get("HF_HOME", None)
+    try:
+        return snapshot_download(
+            repo_id=repo_id,
+            cache_dir=cache_dir,
+            resume_download=not local_only,
+            local_files_only=local_only,
+        )
+    except LocalEntryNotFoundError as err:
+        raise RuntimeError(
+            f"Local snapshot for {repo_id} not found. Run setup_hf or allow downloads by unsetting "
+            "TRANSFORMERS_OFFLINE."
+        ) from err
 
 
 if __name__ == '__main__':
@@ -72,14 +92,16 @@ if __name__ == '__main__':
 
     # Step 1: Initialize the models.
     if args.initial_model in ['codet5-base', 'random']:
-        tokenizer = RobertaTokenizer.from_pretrained('Salesforce/codet5-base')
-        model = T5ForConditionalGeneration.from_pretrained('Salesforce/codet5-base')
-        model_config = model.config
-        if args.initial_model == "random":
-            model = T5ForConditionalGeneration(config=model_config)
+        model_repo = 'Salesforce/codet5-base'
     else:
-        tokenizer = RobertaTokenizer.from_pretrained('Salesforce/codet5-small')
-        model = T5ForConditionalGeneration.from_pretrained('Salesforce/codet5-small')
+        model_repo = 'Salesforce/codet5-small'
+
+    model_path = resolve_model_path(model_repo)
+    tokenizer = RobertaTokenizer.from_pretrained(model_path)
+    model = T5ForConditionalGeneration.from_pretrained(model_path)
+    model_config = model.config
+    if args.initial_model == "random":
+        model = T5ForConditionalGeneration(config=model_config)
     # logger.info(model)
     logger.info(f"Starting Training from {args.initial_model}")
     logger.info(f"Total parameters : {num_parameters(model)}")
