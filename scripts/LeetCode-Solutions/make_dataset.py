@@ -83,9 +83,9 @@ def extract_first_solution(code: str) -> Tuple[Optional[str], str]:
     if end_idx is None:
         return None, "unclosed_class"
 
-    # Truncate before any subsequent Solution class to honor "choose first" rule.
+    # Truncate before any subsequent class to honor "choose first" rule.
     remainder = code[end_idx:]
-    next_match = re.search(r"\bclass\s+Solution\b", remainder)
+    next_match = re.search(r"^\s*class\s+\w+", remainder, flags=re.MULTILINE)
     tail_end = end_idx + next_match.start() if next_match else len(code)
 
     extracted = code[:tail_end]
@@ -156,10 +156,9 @@ def main():
     parser.add_argument("--kneg", type=int, default=1)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--validate_candidates", dest="validate_candidates", action="store_true", help="Compile candidates (no oracle) with optional stub main")
-    parser.add_argument("--no-validate_candidates", dest="validate_candidates", action="store_false", help="Skip compilation of candidates")
     parser.add_argument("--wrap_main", dest="wrap_main", action="store_true", help="Append an empty main() when compiling candidates")
     parser.add_argument("--no-wrap_main", dest="wrap_main", action="store_false", help="Do not append stub main() when compiling candidates")
-    parser.set_defaults(validate_candidates=True, wrap_main=True)
+    parser.set_defaults(validate_candidates=False, wrap_main=True)
     parser.add_argument("--reuse_splits", action="store_true")
     args = parser.parse_args()
 
