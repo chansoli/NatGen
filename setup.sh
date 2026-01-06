@@ -98,6 +98,7 @@ function install_deps() {
     conda run -n "$env_name" pip install tree-sitter==0.19.0
     conda run -n "$env_name" pip install nltk==3.6.7
     conda run -n "$env_name" pip install scipy==1.5.4
+    conda run -n "$env_name" pip install pytest
 
     local env_prefix
     env_prefix="$(get_env_prefix)"
