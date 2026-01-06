@@ -202,6 +202,51 @@ class InlineSnippetInserter(TransformationBase):
         except Exception:
             return None
 
+    def _chunk_helper_lines(self, helper_decl: str, max_chunks: int = 3) -> Tuple[Tuple[str, ...], ...]:
+        """Split the helper declaration into ordered chunks so chunks can be placed separately."""
+        lines = [ln for ln in helper_decl.splitlines() if ln.strip()]
+        if not lines:
+            return tuple()
+
+        chunk_count = min(max_chunks, len(lines))
+        chunk_size = max(1, (len(lines) + chunk_count - 1) // chunk_count)
+        return tuple(tuple(lines[i:i + chunk_size]) for i in range(0, len(lines), chunk_size))
+
+    def _body_anchor_positions(self, source: str, open_brace_idx: int, close_brace_idx: int, count: int) -> Tuple[int, ...]:
+        """Pick stable insertion anchors near start/middle/end of the function body."""
+        if count <= 0:
+            return tuple()
+
+        body_start = open_brace_idx + 1
+        body_slice = source[body_start:close_brace_idx]
+
+        line_end_offsets = []
+        cursor = body_start
+        for line in body_slice.splitlines(True):  # keepends=True to advance by exact length
+            cursor += len(line)
+            line_end_offsets.append(cursor)
+
+        if not line_end_offsets:
+            return tuple(body_start for _ in range(count))
+
+        def pick_anchor(fraction: float) -> int:
+            idx = int(fraction * (len(line_end_offsets) - 1))
+            idx = max(0, min(len(line_end_offsets) - 1, idx))
+            return line_end_offsets[idx]
+
+        fractions = [(i + 1) / (count + 1) for i in range(count)]
+        anchors = [pick_anchor(f) for f in fractions]
+
+        # Ensure strictly increasing anchors to preserve line ordering when inserting.
+        adjusted = []
+        last = body_start
+        for anchor in anchors:
+            candidate = anchor if anchor > last else min(close_brace_idx, last + 1)
+            adjusted.append(candidate)
+            last = candidate
+
+        return tuple(adjusted)
+
     def transform_code(self, code: Union[str, bytes]) -> Tuple[str, object]:
         if self.language != "cpp":
             return code if isinstance(code, str) else code.decode(), {"success": False, "reason": "unsupported_language"}
@@ -236,17 +281,21 @@ class InlineSnippetInserter(TransformationBase):
             if converted_helper is None:
                 return source, {"success": False, "reason": "convert_failed"}
 
-            helper_decl = converted_helper
-            call_stmt = ""
+            helper_chunks = self._chunk_helper_lines(converted_helper)
+            if not helper_chunks:
+                return source, {"success": False, "reason": "no_inserts"}
+
+            anchors = self._body_anchor_positions(
+                source=source,
+                open_brace_idx=open_brace_idx,
+                close_brace_idx=close_brace_idx,
+                count=len(helper_chunks),
+            )
 
             inserts = []
-            if helper_decl.strip():
-                lambda_line = f"\n{helper_decl}\n"
-                inserts.append((open_brace_idx + 1, lambda_line))
-
-            # If no inserts added, return original with failure metadata
-            if not inserts:
-                return source, {"success": False, "reason": "no_inserts"}
+            for chunk, anchor in zip(helper_chunks, anchors):
+                chunk_text = "\n" + "\n".join(chunk) + "\n"
+                inserts.append((anchor, chunk_text))
 
             transformed = self._insert_at(source, tuple(inserts))
             return transformed, {"success": True, "reason": "ok"}

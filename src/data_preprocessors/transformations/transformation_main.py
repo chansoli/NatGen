@@ -1,15 +1,14 @@
 import numpy as np
 from typing import Dict, Callable
 
-from src.data_preprocessors.transformations import (
-    BlockSwap,
-    ConfusionRemover,
-    DeadCodeInserter,
-    ForWhileTransformer,
-    OperandSwap,
-    SyntacticNoisingTransformation,
-    InlineSnippetInserter,
-)
+# Use direct module imports to avoid circular package imports when exposing this module via __init__.
+from .block_swap_transformations import BlockSwap
+from .confusion_remove import ConfusionRemover
+from .dead_code_inserter import DeadCodeInserter
+from .for_while_transformation import ForWhileTransformer
+from .operand_swap_transformations import OperandSwap
+from .syntactic_noising_transformation import SyntacticNoisingTransformation
+from .inline_snippet_inserter import InlineSnippetInserter
 
 
 class SemanticPreservingTransformation:
