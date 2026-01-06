@@ -2,7 +2,13 @@ import numpy as np
 from typing import Dict, Callable
 
 from src.data_preprocessors.transformations import (
-    BlockSwap, ConfusionRemover, DeadCodeInserter, ForWhileTransformer, OperandSwap, SyntacticNoisingTransformation
+    BlockSwap,
+    ConfusionRemover,
+    DeadCodeInserter,
+    ForWhileTransformer,
+    OperandSwap,
+    SyntacticNoisingTransformation,
+    InlineSnippetInserter,
 )
 
 
@@ -23,7 +29,8 @@ class SemanticPreservingTransformation:
                 DeadCodeInserter: 1,
                 ForWhileTransformer: 1,
                 OperandSwap: 1,
-                SyntacticNoisingTransformation: 1
+                SyntacticNoisingTransformation: 1,
+                InlineSnippetInserter: 1,
             }
         self.transformations = []
         if self.language == "nl":

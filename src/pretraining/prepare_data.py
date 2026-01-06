@@ -14,7 +14,7 @@ from tqdm import tqdm
 from src.data_preprocessors.transformations import (
     NoTransformation, SemanticPreservingTransformation,
     BlockSwap, ConfusionRemover, DeadCodeInserter,
-    ForWhileTransformer, OperandSwap, VarRenamer
+    ForWhileTransformer, OperandSwap, VarRenamer, InlineSnippetInserter
 )
 
 
@@ -27,9 +27,17 @@ def set_seeds(seed):
 
 
 def create_transformers_from_conf_file(processing_conf):
-    classes = [BlockSwap, ConfusionRemover, DeadCodeInserter, ForWhileTransformer, OperandSwap, VarRenamer]
+    classes = [
+        BlockSwap,
+        ConfusionRemover,
+        DeadCodeInserter,
+        ForWhileTransformer,
+        OperandSwap,
+        VarRenamer,
+        InlineSnippetInserter,
+    ]
     transformers = {
-        c: processing_conf[c.__name__] for c in classes
+        c: processing_conf.get(c.__name__, 0) for c in classes
     }
     return transformers
 

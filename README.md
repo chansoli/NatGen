@@ -67,6 +67,11 @@ bash process_data.sh
 ```
 Data processing takes several parameters. These parameters are passed through a configuration json file. The configuration file should be in [configs/pretraining/data_config](configs/pretraining/data_config) directory. 
 
+### Run tests
+```
+python -m unittest test/inline_snippet_inserter_test.py
+```
+
 ### Pretrain the model 
 ```
 cd scripts/pretraining;

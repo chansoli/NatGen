@@ -9,3 +9,4 @@ from .no_transform import *
 from .syntactic_noising_transformation import *
 from .transformation_main import *
 from .var_renaming_transformation import *
+from .inline_snippet_inserter import *

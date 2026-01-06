@@ -1,5 +1,6 @@
 {
   "transformers": {
+    "InlineSnippetInserter": 1,
     "BlockSwap": 6,
     "ConfusionRemover": 10,
     "ForWhileTransformer": 2,
