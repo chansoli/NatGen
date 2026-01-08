@@ -25,9 +25,6 @@ from src.data_preprocessors.semantic_breaking_transformation import (
 from src.data_preprocessors.transformations import SemanticPreservingTransformation
 from src.pretraining.prepare_data import create_transformers_from_conf_file
 
-ZERO_TREE_TOKEN_IDS = " ".join(["0"] * 128)
-
-
 def set_seeds(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -336,7 +333,6 @@ def main():
                         "orig_code": extracted,
                         "positive_code": variants[i],
                         "negative_code": deviants[i],
-                        "tree_token_ids": ZERO_TREE_TOKEN_IDS,
                     })
 
             pair_list = pairs_train if split_name == "train" else pairs_test
