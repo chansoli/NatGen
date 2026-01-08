@@ -86,6 +86,8 @@ function install_deps() {
         tensorboard==2.8.0 \
         sentencepiece        # needed for Salesforce/codet5-base
 
+    conda install -n "$env_name" -y -c conda-forge mkl mkl-service
+
     # ---- Make sure pip tooling is recent ----
     conda run -n "$env_name" python -m pip install --upgrade pip setuptools wheel
 
